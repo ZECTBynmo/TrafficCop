@@ -228,8 +228,12 @@ TrafficCop.prototype.triggerRequest = function(request, client) {
   var client = request.clients.shift();
 
   // Send the trigger to the client
-  client.send(JSON.stringify({
-    type: 'trigger',
-    name: request.name,
-  }));
+  try {
+    client.send(JSON.stringify({
+      type: 'trigger',
+      name: request.name,
+    }));
+  } catch(e) {
+    console.log("Error while triggering request");
+  }
 }
