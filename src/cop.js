@@ -43,10 +43,13 @@ var TrafficCop = module.exports = function(options) {
 TrafficCop.prototype.setup = function() {
   var _this = this;
 
+  console.log("Setting up traffic cop on port %s", this.port);
+
   this.websocketServer = new WebSocketServer({port: this.port});
 
   // Setup our websocket server
   this.websocketServer.on('connection', function connection(client) {
+    console.log("New client connection");
 
     // Handle incoming message from clients
     client.on('message', function incoming(message) {
@@ -112,24 +115,31 @@ TrafficCop.prototype.handleMessage = function(data, client) {
 TrafficCop.prototype.sendRequestStatus = function(options, client) {
 
   function requestStatus(request) {
-    return {
-      name: request.name,
-      clients: request.clients.length,
-      interval: request.msPerRequest,
+    if(request === undefined) {
+      return {}
+    } else {
+      return {
+        name: request.name,
+        clients: request.clients.length,
+        interval: request.msPerRequest,
+      }
     }
   }
 
   if(options === undefined || options.name === undefined || options.name == 'all') {
+    var statusName = 'all'
     var status = {};
     for(var name in this.requests) {
       status[name] = requestStatus(this.requests[name]);
     }
   } else {
+    var statusName = options.name;
     var request = this.requests[options.name];
     var status = requestStatus(request);
   }
 
   client.send(JSON.stringify({
+    name: statusName,
     type: 'status',
     data: status,
   }));
@@ -192,6 +202,7 @@ TrafficCop.prototype.createRequest = function(options, client) {
     name: options.name,
     clients: [client],
     msPerRequest: msPerRequest,
+
     interval: setInterval(function() {
       _this.triggerRequest(newRequest, client);
     }, interval),
